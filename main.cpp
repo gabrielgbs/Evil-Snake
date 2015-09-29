@@ -1,6 +1,12 @@
+#ifdef _WIN32
+#include <Windows.h>
+#else
+#include <unistd.h>
+#endif
+
 #include <GL/glut.h>
-#include "jogo.h"  
-          //definicao de cores         
+#include "jogo.h"
+          //definicao de cores
 #define RED 1.0,0.0,0.0
 #define GREEN 0.0,1.0,0.0
 #define BLACK 0.0,0.0,0.0
@@ -11,51 +17,56 @@
 
 void desenhaApresentacao();
 
-Jogo* jogo;             
+Jogo* jogo;
 
 bool jogoComecou;
-int largura;            //largura da tela 
-int altura;             //altura da tela 
+int largura;            //largura da tela
+int altura;             //altura da tela
 bool podeApagar;        //variavel que indica se a "comida" pode ser redesenhada
-bool jogoParado;        //variavel que indica o estado do jogo(parado ou nao) 
-bool cobraColidiu;      //variavel que indica se a cobra colidiu com ela ou com a parede 
-int tamQuadrado;        //tamanho dos "quadrados" que formam a parede, a cobra,... 
+bool jogoParado;        //variavel que indica o estado do jogo(parado ou nao)
+bool cobraColidiu;      //variavel que indica se a cobra colidiu com ela ou com a parede
+int tamQuadrado;        //tamanho dos "quadrados" que formam a parede, a cobra,...
 
 /*
 funcao que mapeia cada linha e coluna dos pedacos(quadrado)
-para coordenadas na tela, na verdade sao coordenadas do 
+para coordenadas na tela, na verdade sao coordenadas do
 canto superior direito dos quadrados
 */
-int funcao(int i, int j, int k){  
+int funcao(int i, int j, int k){
      if(k==0)
          return tamQuadrado*(j+2);
      else
-         return tamQuadrado*(i+2);    
+         return tamQuadrado*(i+2);
 }
 
-void delay(int n){             //funcao atraso       
-     Sleep(n*30);
+void delay(int n){             //funcao atraso
+    int _delay = n*30;
+    #ifdef _WIN32
+    Sleep(_delay);
+    #else
+    usleep(_delay*1000);
+    #endif
 }
 
 void inicializaJogo(bool f){
     jogo = new Jogo();        //instancia variavel jogo
-    podeApagar = false;       
+    podeApagar = false;
     jogoParado = f;           //inicia jogo parado ou nao
-    cobraColidiu = false;            
+    cobraColidiu = false;
 }
 
 /*
-funcao que avalia se a cobra comeu alguma comida 
+funcao que avalia se a cobra comeu alguma comida
 ou colidiu com a parede ou com ela mesma
 */
-void avaliaJogo(){              
-     bool b = jogo->comeu();    //se a cobra comeu a comida 
-     if(b==true)                
-        podeApagar=true;        //apaga comida e depois redesenha             
-     if(jogo->colidiuParede()==true || jogo->colidiuCobra()==true){               
+void avaliaJogo(){
+     bool b = jogo->comeu();    //se a cobra comeu a comida
+     if(b==true)
+        podeApagar=true;        //apaga comida e depois redesenha
+     if(jogo->colidiuParede()==true || jogo->colidiuCobra()==true){
         cobraColidiu = true;      //variavel indicara que a cobra colidiu
         jogoParado = true;        //jogo sera parado
-     }   
+     }
 }
 
 
@@ -64,8 +75,8 @@ funcao que inicializa a glut e outros parametros
 */
 void init(int argc, char **argv){
     tamQuadrado = 10;
-    largura = 420;               
-    altura = 350; 
+    largura = 420;
+    altura = 350;
     jogoComecou = false;
     inicializaJogo(true);        //incializa jogo parado
     glutInit(&argc, argv);
@@ -83,7 +94,7 @@ void init(int argc, char **argv){
 funcao que desenha a pontuacao
 */
 void desenhaPontuacao(){
-     int p = jogo->getPontuacao();   
+     int p = jogo->getPontuacao();
      int d1 = p/1000;
      int d2 = (p%1000)/100;
      int d3 = (p%100)/10;
@@ -99,7 +110,7 @@ void desenhaPontuacao(){
      glRasterPos2i(shift, altura-s);
      glutBitmapCharacter(GLUT_BITMAP_9_BY_15, d3+'0');
      shift += glutBitmapWidth(GLUT_BITMAP_9_BY_15, d3+'0');
-     glRasterPos2i(shift, altura-s); 
+     glRasterPos2i(shift, altura-s);
      glutBitmapCharacter(GLUT_BITMAP_9_BY_15, d4+'0');
      shift += glutBitmapWidth(GLUT_BITMAP_9_BY_15, d4+'0');
 }
@@ -142,30 +153,30 @@ void desenhaGameOver(){
 funcao que desenha as paredes
 */
 void desenhaCenario(){
-    int tq = tamQuadrado;  
+    int tq = tamQuadrado;
     glBegin(GL_QUADS);
-        glColor3f(GRAY);                         
-        glVertex2i(0,altura);                           
+        glColor3f(GRAY);
+        glVertex2i(0,altura);
         glVertex2i(largura,altura);
         glVertex2i(largura,altura - 2*tq);
-        glVertex2i(0,altura - 2*tq);  
-        glColor3f(BLUE);                         
-        glVertex2i(0,altura-2*tq);                           
+        glVertex2i(0,altura - 2*tq);
+        glColor3f(BLUE);
+        glVertex2i(0,altura-2*tq);
         glVertex2i(largura,altura-2*tq);
         glVertex2i(largura,altura - 3*tq);
-        glVertex2i(0,altura - 3*tq); 
-        glVertex2i(0,0);                           
+        glVertex2i(0,altura - 3*tq);
+        glVertex2i(0,0);
         glVertex2i(tq,0);
         glVertex2i(tq,altura - 3*tq);
-        glVertex2i(0,altura - 3*tq); 
-        glVertex2i(largura-tq,0);                           
+        glVertex2i(0,altura - 3*tq);
+        glVertex2i(largura-tq,0);
         glVertex2i(largura,0);
         glVertex2i(largura,altura - 3*tq);
         glVertex2i(largura-tq,altura - 3*tq);
-        glVertex2i(tq,0);                           
+        glVertex2i(tq,0);
         glVertex2i(largura-tq,0);
         glVertex2i(largura-tq,tq);
-        glVertex2i(tq,tq);  
+        glVertex2i(tq,tq);
     glEnd();
 }
 
@@ -176,51 +187,51 @@ void desenhaCobra(){
      int i,x,y;     //variaveis auxiliares
      int tq = tamQuadrado;
      Pedaco *aux = jogo->getCobra()->getTail();     //ponteiro para a "cauda" da cobra
-     for(i = 0; i<jogo->getCobra()->getTam(); i++){  
-          x = funcao(aux->getLine(),aux->getCol(),0); //coordenada x 
+     for(i = 0; i<jogo->getCobra()->getTam(); i++){
+          x = funcao(aux->getLine(),aux->getCol(),0); //coordenada x
           y = funcao(aux->getLine(),aux->getCol(),1); //coordenada y
-          if(cobraColidiu==true)                     //se colidiu, a cor da cobra sera vermelha  
+          if(cobraColidiu==true)                     //se colidiu, a cor da cobra sera vermelha
               glColor3f(RED);
           else                                       //senao a cor sera preta
-              glColor3f(GREENBLACK);                     
+              glColor3f(GREENBLACK);
           glBegin(GL_QUADS);                        //desenha cada quadrado(pedaco) da cobra
-             glVertex2i(x, y);         //a partir das coordenadas do canto superior direito             
+             glVertex2i(x, y);         //a partir das coordenadas do canto superior direito
              glVertex2i(x, y-tq);      //descobrimos as coordenadas dos outros vertices(cantos)
              glVertex2i(x-tq, y-tq);   //utilizando tambem o tamanho dos quadrados
-             glVertex2i(x-tq, y);       
-          glEnd();            
-          aux = aux->getNext();     //faz ponteiro apontar para o proximo pedaco                   
-     }    
+             glVertex2i(x-tq, y);
+          glEnd();
+          aux = aux->getNext();     //faz ponteiro apontar para o proximo pedaco
+     }
 }
 
 void desenhaComida(){
-    int tq = tamQuadrado; 
+    int tq = tamQuadrado;
     int i = jogo->getComida()->getLine(); //linha da "comida"
     int j = jogo->getComida()->getCol();  //coluna da "comida"
-    int x = funcao(i, j, 0);       //coordenada x do canto superior direito da "comida"     
+    int x = funcao(i, j, 0);       //coordenada x do canto superior direito da "comida"
     int y = funcao(i, j, 1);       //coordenada y do canto superior direito da "comida"
     if(podeApagar==false){        // se nao pode apagar a comida
-      glBegin(GL_QUADS);          //desenha a comida com a cor preta 
+      glBegin(GL_QUADS);          //desenha a comida com a cor preta
         glColor3f(GREENBLACK);
         glVertex2i(x, y);
         glVertex2i(x, y-tq);
         glVertex2i(x-tq, y-tq);
-        glVertex2i(x-tq, y);              
+        glVertex2i(x-tq, y);
       glEnd();
-    }else{                         //senao apaga comida         
-      jogo->criaComida();          //cria nova comida       
+    }else{                         //senao apaga comida
+      jogo->criaComida();          //cria nova comida
       podeApagar = false;          //nao pode apagar comida
-    }  
+    }
     if(cobraColidiu==true){        // se cobra colidiu
-      glBegin(GL_QUADS);           //desenha a comida com a cor vermelha 
+      glBegin(GL_QUADS);           //desenha a comida com a cor vermelha
         glColor3f(RED);
         glVertex2i(x, y);
         glVertex2i(x, y-tq);
         glVertex2i(x-tq, y-tq);
-        glVertex2i(x-tq, y);              
+        glVertex2i(x-tq, y);
       glEnd();
     }
-} 
+}
 /*
 void reshape(int w, int h){
 	glViewport(0,0,w,h);
@@ -233,8 +244,8 @@ void reshape(int w, int h){
         tamQuadrado = (int)altura/35;
         if(tamQuadrado<10) tamQuadrado = 10;
     }else{
-        tamQuadrado = (int)largura/35;     
-	    if(tamQuadrado<10) tamQuadrado = 10;            
+        tamQuadrado = (int)largura/35;
+	    if(tamQuadrado<10) tamQuadrado = 10;
     }
     glMatrixMode(GL_MODELVIEW);
 }*/
@@ -242,12 +253,12 @@ void reshape(int w, int h){
 /*
 funcao para eventos no teclado,
 serve para controlar a direcao da cobra,
-dependendo da direcao atual certas teclas nao 
-poderao ou nao precisarao ser usadas, 
-exemplo: se a direcao e norte, nao podemos 
+dependendo da direcao atual certas teclas nao
+poderao ou nao precisarao ser usadas,
+exemplo: se a direcao e norte, nao podemos
 teclar a seta p/ baixo.
 A cobra se movimenta adicionando pedacos na frente(cabeca)
-e retirando pedacos de tras(cauda)     
+e retirando pedacos de tras(cauda)
 */
 void tecladoDirecao(int tecla, int x, int y){
      if(jogoParado==false){  //se jogo nao estiver parado
@@ -255,24 +266,24 @@ void tecladoDirecao(int tecla, int x, int y){
           case GLUT_KEY_UP:
                if(jogo->getDirecao()==LESTE || jogo->getDirecao()==OESTE){
                     jogo->getCobra()->removeTail();
-                    glutPostRedisplay();    //redesenha       
+                    glutPostRedisplay();    //redesenha
                     jogo->setDirecao(NORTE);
                     jogo->getCobra()->addHead(
                       jogo->getCobra()->getHead()->getLine() + 1,
-                      jogo->getCobra()->getHead()->getCol());                         
+                      jogo->getCobra()->getHead()->getCol());
                }
                glutPostRedisplay();  //redesenha
                break;
           case GLUT_KEY_DOWN:
                if(jogo->getDirecao()==LESTE || jogo->getDirecao()==OESTE){
-                    jogo->getCobra()->removeTail();  
-                    glutPostRedisplay();        //redesenha     
+                    jogo->getCobra()->removeTail();
+                    glutPostRedisplay();        //redesenha
                     jogo->setDirecao(SUL);
                     jogo->getCobra()->addHead(
                       jogo->getCobra()->getHead()->getLine() - 1,
-                      jogo->getCobra()->getHead()->getCol());                       
+                      jogo->getCobra()->getHead()->getCol());
                }
-               glutPostRedisplay();   //redesenha                                              
+               glutPostRedisplay();   //redesenha
                break;
           case GLUT_KEY_LEFT:
                if(jogo->getDirecao()==NORTE || jogo->getDirecao()==SUL){
@@ -281,30 +292,30 @@ void tecladoDirecao(int tecla, int x, int y){
                     jogo->setDirecao(OESTE);
                     jogo->getCobra()->addHead(
                       jogo->getCobra()->getHead()->getLine(),
-                      jogo->getCobra()->getHead()->getCol() - 1);                       
+                      jogo->getCobra()->getHead()->getCol() - 1);
                }
                glutPostRedisplay(); //redesenha
                break;
           case GLUT_KEY_RIGHT:
                if(jogo->getDirecao()==NORTE || jogo->getDirecao()==SUL){
-                    jogo->getCobra()->removeTail();  
+                    jogo->getCobra()->removeTail();
                     glutPostRedisplay();  //redesenha
                     jogo->setDirecao(LESTE);
                     jogo->getCobra()->addHead(
                       jogo->getCobra()->getHead()->getLine(),
-                      jogo->getCobra()->getHead()->getCol() + 1);                         
-               }  
+                      jogo->getCobra()->getHead()->getCol() + 1);
+               }
                glutPostRedisplay(); //redesenha
-               break;     
+               break;
        }
-     }   
+     }
 }
 
 /*
 desenha na tela
 */
 void display(){
-    glClear(GL_COLOR_BUFFER_BIT);                      
+    glClear(GL_COLOR_BUFFER_BIT);
     if(jogoComecou==false)
         desenhaApresentacao();
     else{
@@ -313,8 +324,8 @@ void display(){
          desenhaComida();
          desenhaPontuacao();
          if(cobraColidiu==true)
-             desenhaGameOver();                      
-    }     
+             desenhaGameOver();
+    }
     glutSwapBuffers();
 }
 
@@ -336,7 +347,7 @@ void keyboard(unsigned char tecla, int x, int y){
          case 'P':
               if(cobraColidiu==false)
                   jogoParado = !jogoParado;
-              break;                              
+              break;
      }
 }
 
@@ -344,12 +355,12 @@ void keyboard(unsigned char tecla, int x, int y){
 funcao quando nenhum evento esta ocorrendo
 */
 void idle(){
-     if(jogoParado==false){ //se a cobra estiver se movendo 
+     if(jogoParado==false){ //se a cobra estiver se movendo
         jogo->jogoIdle();   //faz a cobra se movimentar na mesma direcao
         avaliaJogo();       //chama funcao para avaliar jogo
         delay(jogo->getVelocidade());  //atraso para poder redesenhar cobra
-        glutPostRedisplay();  //redesenhar       
-     }   
+        glutPostRedisplay();  //redesenhar
+     }
 }
 
 /*
@@ -360,7 +371,7 @@ void opcoesMenu(int id){
           jogoComecou = true;;
           inicializaJogo(false);
      }
-     else if(id==2 && jogoParado==true && cobraColidiu==false) 
+     else if(id==2 && jogoParado==true && cobraColidiu==false)
               jogoParado = false;
      else if(id==3) exit(0);
 }
@@ -401,7 +412,7 @@ int main(int argc, char** argv){
 void desenhaApresentacao(){
     glClear(GL_COLOR_BUFFER_BIT);
     //Desenhar plano de fundo
-    
+
     glBegin(GL_POLYGON);
          glColor3f(1.0f, 0.0f, 0.0f);
          glVertex2i(0,0);
@@ -412,8 +423,8 @@ void desenhaApresentacao(){
          glColor3f(0.0f, 0.0f, 0.0f);
          glVertex2i(0,altura);
     glEnd();
-    
-    
+
+
     //Desenhar corpo da serpente
     glBegin(GL_TRIANGLE_STRIP);
          glColor3f(0.0f, 0.275f, 0.0f);
@@ -424,7 +435,7 @@ void desenhaApresentacao(){
     	    glVertex2i(34,164);
     	    glColor3f(0.0f, 0.3f, 0.0f);
  	    glVertex2i(31,121);
-    	    glVertex2i(51,161);    	          
+    	    glVertex2i(51,161);
     	    glVertex2i(47,118);
     	    glVertex2i(68,156);
     	    glVertex2i(54,116);
@@ -439,8 +450,8 @@ void desenhaApresentacao(){
     	    glVertex2i(117,120);
     	    glVertex2i(89,88);
     	    glVertex2i(123,115);
-    	    glVertex2i(100,80);    	  
-         glColor3f(0.0f, 0.275f, 0.0f);        
+    	    glVertex2i(100,80);
+         glColor3f(0.0f, 0.275f, 0.0f);
     	    glVertex2i(129,113);
     	    glVertex2i(114,72);
     	    glVertex2i(138,114);
@@ -455,7 +466,7 @@ void desenhaApresentacao(){
     	    glColor3f(0.0f, 0.275f, 0.0f);
     	    glVertex2i(150,139);
     	    glVertex2i(187,123);
-    	    glVertex2i(154,151);    	          
+    	    glVertex2i(154,151);
     	    glVertex2i(192,137);
     	    glVertex2i(158,163);
     	    glColor3f(0.0f, 0.25f, 0.0f);
@@ -465,7 +476,7 @@ void desenhaApresentacao(){
     	    glVertex2i(167,193);
     	    glVertex2i(206,180);
     	    glColor3f(0.0f, 0.275f, 0.0f);
-    	    glVertex2i(173,205);    	          
+    	    glVertex2i(173,205);
     	    glVertex2i(209,186);
     	    glVertex2i(179,215);
     	    glVertex2i(213,194);
@@ -474,7 +485,7 @@ void desenhaApresentacao(){
     	    glVertex2i(218,202);
     	    glVertex2i(191,233);
     	    glVertex2i(223,207);
-    	    glVertex2i(198,240);    	          
+    	    glVertex2i(198,240);
     	    glVertex2i(228,213);
     	    glColor3f(0.0f, 0.275f, 0.0f);
     	    glVertex2i(206,248);
@@ -484,7 +495,7 @@ void desenhaApresentacao(){
     	    glVertex2i(225,261);
     	    glColor3f(0.0f, 0.25f, 0.0f);
     	    glVertex2i(240,223);
-    	    glVertex2i(235,264);    	          
+    	    glVertex2i(235,264);
     	    glVertex2i(246,225);
     	    glVertex2i(246,266);
     	    glVertex2i(251,226);
@@ -493,7 +504,7 @@ void desenhaApresentacao(){
     	    glVertex2i(258,227);
     	    glVertex2i(268,268);
     	    glVertex2i(265,227);
-    	    glVertex2i(280,266);    	          
+    	    glVertex2i(280,266);
     	    glColor3f(0.0f, 0.3f, 0.0f);
     	    glVertex2i(270,226);
     	    glVertex2i(291,263);
@@ -509,7 +520,7 @@ void desenhaApresentacao(){
     	    glColor3f(0.0f, 0.25f, 0.0f);
     	    glVertex2i(297,210);
     glEnd();
-    
+
     //Desenhar cabeca da serpente
     glBegin(GL_POLYGON);
     		glVertex2i(329,234);
@@ -518,7 +529,7 @@ void desenhaApresentacao(){
     		glVertex2i(341,191);
     		glVertex2i(324,212);
     glEnd();
-    glBegin(GL_POLYGON);		
+    glBegin(GL_POLYGON);
     		glVertex2i(329,234);
     		glVertex2i(324,212);
     		glVertex2i(322,212);
@@ -533,13 +544,13 @@ void desenhaApresentacao(){
     		glVertex2i(297,210);
     		glVertex2i(315,202);
     glEnd();
-    glBegin(GL_POLYGON)	;	
+    glBegin(GL_POLYGON)	;
     		glVertex2i(297,210);
     		glVertex2i(315,202);
     		glVertex2i(326,187);
     		glVertex2i(323,186);
     		glVertex2i(317,189);
-    glEnd();	    		  
+    glEnd();
 
 
 
@@ -570,7 +581,7 @@ void desenhaApresentacao(){
           glVertex2i(325,204);
           glVertex2i(326,210);
     glEnd();
-    
+
     glBegin(GL_POLYGON);
           glVertex2i(324,190);
           glVertex2i(329,192);
@@ -590,7 +601,7 @@ void desenhaApresentacao(){
           glVertex2i(329,altura-160);
           glVertex2i(332,altura-157);
     glEnd();
-    
+
     glBegin(GL_POLYGON);
           glVertex2i(332,altura-169);
           glVertex2i(330,altura-175);
@@ -611,7 +622,7 @@ void desenhaApresentacao(){
     glEnd();
 
     //EVIL SNAKE
-    
+
     //E
     glColor3f(0.80f, 0.80f, 0.80f);
     glBegin(GL_POLYGON);
@@ -620,7 +631,7 @@ void desenhaApresentacao(){
     glColor3f(0.20f, 0.20f, 0.20f);
           glVertex2i(18,286);
     glEnd();
-    glBegin(GL_POLYGON);            
+    glBegin(GL_POLYGON);
           glVertex2i(14,300);
     glColor3f(0.80f, 0.80f, 0.80f);
           glVertex2i(46,295);
@@ -633,9 +644,9 @@ void desenhaApresentacao(){
     glColor3f(0.80f, 0.80f, 0.80f);
           glVertex2i(26,256);
     glEnd();
-    
+
     //V
-    glBegin(GL_POLYGON);            
+    glBegin(GL_POLYGON);
           glVertex2i(41,altura-26);
     glColor3f(0.20f, 0.20f, 0.20f);
           glVertex2i(77,altura-55);
@@ -648,7 +659,7 @@ void desenhaApresentacao(){
     glColor3f(0.20f, 0.20f, 0.20f);
           glVertex2i(75,altura-80);
     glEnd();
-    
+
     //I
     glBegin(GL_POLYGON);
           glVertex2i(88,altura-15);
@@ -658,7 +669,7 @@ void desenhaApresentacao(){
     glColor3f(0.20f, 0.20f, 0.20f);
           glVertex2i(85,altura-50);
     glEnd();
-    
+
     //L
     glBegin(GL_POLYGON);
           glVertex2i(101,altura-12);
@@ -673,7 +684,7 @@ void desenhaApresentacao(){
     glColor3f(0.80f, 0.80f, 0.80f);
           glVertex2i(116,altura-70);
     glEnd();
-    
+
     //S
     glBegin(GL_POLYGON);
           glVertex2i(96,altura-75);
@@ -688,7 +699,7 @@ void desenhaApresentacao(){
     glColor3f(0.50f, 0.50f, 0.50f);
           glVertex2i(105,altura-115);
     glEnd();
-    
+
     //N
     glBegin(GL_POLYGON);
           glVertex2i(100,altura-83);
@@ -696,7 +707,7 @@ void desenhaApresentacao(){
           glVertex2i(119,altura-99);
           glVertex2i(115,altura-141);
     glEnd();
-    glBegin(GL_POLYGON);      
+    glBegin(GL_POLYGON);
          glColor3f(0.250f, 0.250f, 0.250f);
           glVertex2i(100,altura-83);
           glVertex2i(148,altura-107);
@@ -704,45 +715,45 @@ void desenhaApresentacao(){
           glVertex2i(154,altura-127);
           glVertex2i(105,altura-103);
     glEnd();
-    glBegin(GL_POLYGON);      
+    glBegin(GL_POLYGON);
           glColor3f(0.950f, 0.950f, 0.950f);
           glVertex2i(140,altura-73);
           glVertex2i(154,altura-127);
           glColor3f(0.250f, 0.250f, 0.250f);
           glVertex2i(138,altura-114);
     glEnd();
-    
+
     //A
-    glBegin(GL_POLYGON);      
+    glBegin(GL_POLYGON);
           glVertex2i(158,altura-129);
           glColor3f(0.50f, 0.50f, 0.50f);
           glVertex2i(162,altura-66);
           glVertex2i(172,altura-104);
     glEnd();
-    glBegin(GL_POLYGON);      
+    glBegin(GL_POLYGON);
           glColor3f(0.250f, 0.250f, 0.250f);
           glVertex2i(172,altura-104);
           glVertex2i(162,altura-66);
           glColor3f(0.950f, 0.950f, 0.950f);
           glVertex2i(198,altura-117);
-          
+
     glEnd();
-    
+
     //K
-    glBegin(GL_POLYGON);      
+    glBegin(GL_POLYGON);
           glVertex2i(186,altura-59);
           glColor3f(0.50f, 0.50f, 0.50f);
           glVertex2i(234,altura-103);
           glVertex2i(195,altura-95);
     glEnd();
-    glBegin(GL_POLYGON);      
+    glBegin(GL_POLYGON);
           glColor3f(0.250f, 0.250f, 0.250f);
           glVertex2i(195,altura-95);
           glVertex2i(221,altura-53);
           glColor3f(0.950f, 0.950f, 0.950f);
           glVertex2i(202,altura-118);
     glEnd();
-    
+
     //E
     glBegin(GL_POLYGON);
           glVertex2i(223,300);
@@ -750,14 +761,14 @@ void desenhaApresentacao(){
           glVertex2i(255,308);
           glVertex2i(231,272);
     glEnd();
-    glBegin(GL_POLYGON);            
+    glBegin(GL_POLYGON);
           glColor3f(0.250f, 0.250f, 0.250f);
           glVertex2i(228,286);
           glVertex2i(261,281);
           glColor3f(0.950f, 0.950f, 0.950f);
           glVertex2i(236,257);
     glEnd();
-    glBegin(GL_POLYGON);      
+    glBegin(GL_POLYGON);
           glVertex2i(231,272);
           glColor3f(0.250f, 0.250f, 0.250f);
           glVertex2i(272,251);
@@ -773,9 +784,9 @@ bool colidiu(){
      x = funcao(i,j,0)-tamQuadrado/2;
      y = funcao(i,j,1)-tamQuadrado/2;
      glReadPixels(x, y, 1, 1, GL_RGB, GL_FLOAT, pixels);
-     if((pixels[0]==1.0 && pixels[1]==1.0 && pixels[2]==1.0)|| 
+     if((pixels[0]==1.0 && pixels[1]==1.0 && pixels[2]==1.0)||
         (pixels[0]==1.0 && pixels[1]==0.0 && pixels[2]==0.0))
         return false;
-     else return true;                
+     else return true;
 }
 */
